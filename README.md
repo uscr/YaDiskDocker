@@ -1,5 +1,7 @@
 # Yandex Disk in Docker
-Докеризированная версия консольного клиента дял linux: https://yandex.ru/support/yandex-360/customers/disk/desktop/linux/ru/ с поддержкой запуска с переопределением ID пользователя.
+Докеризированная версия консольного клиента для linux: https://yandex.ru/support/yandex-360/customers/disk/desktop/linux/ru/ с поддержкой запуска с переопределением ID пользователя.
+
+Для управления доступна ансибл-роль: [yandex-disk](https://gitlab.uscr.ru/ansible/galaxy-roles/yandex-disk)
 
 # Сборка и запуск (быстрый старт)
 
