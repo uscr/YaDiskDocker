@@ -1,26 +1,40 @@
 # Yandex Disk in Docker
-Докеризированная версия консольного клиента дял linux: https://yandex.ru/support/yandex-360/customers/disk/desktop/linux/ru/
+Докеризированная версия консольного клиента дял linux: https://yandex.ru/support/yandex-360/customers/disk/desktop/linux/ru/ с поддержкой запуска с переопределением ID пользователя.
 
 # Сборка и запуск (быстрый старт)
-    
+
+    # Сборка
     docker build . -t yandex-disk
-    # Авторизация:
-    docker run -it --rm -v ~/.yandex-disk:/auth yandex-disk token
+
+    # Получение токена и ID инсталяции (iid)
+    docker run -it --rm --user $(id -u):$(id -g) --name=yandex-disk -v ~/.yandex-disk:/config -v ~/yandex-disk:/data yandex-disk token
+
     # Запуск синхронизации
-    docker run --rm --name=yandex-disk -v ~/.yandex-disk:/auth -v ~/yandex-disk-data:/data:rw yandex-disk
+    docker run --user $(id -u):$(id -g) --name=yandex-disk --name=yandex-disk -v ~/.yandex-disk:/config -v ~/yandex-disk:/data yandex-disk
+
     # Получение статуса синхронизации
-    docker exec -it yandex-disk yandexdisk status
+    docker exec -it yandex-disk yandexdisk
+
+    # Корректное завершение работы
+    docker exec -it yandex-disk yandexdisk stop
+
+    # Возобновление синхронизации после остановки
+    docker start yandex-disk
+
+# Запуск от имени конкретного пользователя
+В командах выше `--user $(id -u):$(id -g)` следует заменить на UID и GID конкретного пользователя. Для запуска от пользователя root указать `--user 0:0` или не использовать опцию `--user` совсем.
 
 # Персистентные данные
 
-Каталог */auth* внутри контейнера должен содержать файл token с авторизационным токеном.
+Каталог */config* внутри контейнера должен содержать файл token с авторизационным токеном и файл iid c ID инсталляции.
 
 Каталог */data* внутри контейнера используется как хранилище для синхронизации файлов.
 
-# Кастомные опции запуска
+# entrypoint.sh
 
-А любые :)
+Для работы яндекс диска требуется скрипт-обёртка.
+Основные задачи, которые он решает:
+- создание дефолтного файла конфигурации при первом запуске
+- менеджмент файла с ID инсталляции
 
-Но нужно помнить, что при переопределении CMD следует явно указать команду. Например:
-
-    docker run --rm --name=yandex-disk -v ~/.yandex-disk:/auth -v ~/yandex-disk-data:/data:rw yandex-disk --no-daemon start
+Файл с ID инсталляции не описан в документации и всегда помещается в дефолтному пути в $HOME/.config/yandex-disk/iid. Поэтому, для возможности переопределения каталога с конфигурационным файлом и запуска от разных пользователей скрипт после авторизации уносит файл в /config, а перед запуском переносит файл по нужному пути.

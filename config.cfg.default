@@ -1,8 +1,6 @@
-# Path to authentication data file. File must be prepared using token command.
-auth=/auth/token
-
+auth="/config/token"
 # Yandex.Disk directory.
-dir=/data
+dir="/data"
 
 # Do not synchronize specified directories.
 #exclude-dirs=exclude/dir1,exclude/dir2,path/to/another/exclude/dir
@@ -13,6 +11,6 @@ dir=/data
 #proxy=socks4,my.proxy.local,1080,login,password
 #proxy=socks5,my.another.proxy.local,1081
 # Don't use proxy server:
-#proxy=no
+proxy=no
 # Use system proxy settings (default):
 #proxy=auto
