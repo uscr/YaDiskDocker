@@ -1,42 +1,66 @@
+> **Note**: This document is an automatic translation from Russian using ChatGPT. 
 # Yandex Disk in Docker
-Докеризированная версия консольного клиента для linux: https://yandex.ru/support/yandex-360/customers/disk/desktop/linux/ru/ с поддержкой запуска с переопределением ID пользователя.
 
-Для управления доступна ансибл-роль: [yandex-disk](https://gitlab.uscr.ru/ansible/galaxy-roles/yandex-disk)
+[На русском](README.ru.md)
 
-# Сборка и запуск (быстрый старт)
+A dockerized version of the console client for Linux: https://yandex.ru/support/yandex-360/customers/disk/desktop/linux/ru/ with support for running with custom user ID override.
 
-    # Сборка
+Latest commits to this repository can be found here: [gitlab.uscr.ru/yadiskdocker](https://gitlab.uscr.ru/public-projects/yadiskdocker)
+
+For management, you can use an Ansible role: [yandex-disk](https://gitlab.uscr.ru/ansible/galaxy-roles/yandex-disk)
+
+- [Author Contacts](#author-contacts)
+- [Build and Run (Quick Start)](#build-and-run-quick-start)
+- [Run as a Specific User](#run-as-a-specific-user)
+- [Persistent Data](#persistent-data)
+- [Entrypoint Script Description](#entrypoint-script-description)
+
+## Author Contacts
+
+Telegram: [UsCr0](https://t.me/UsCr0)
+
+# Build and Run (Quick Start)
+
+    # Build
     docker build . -t yandex-disk
 
-    # Получение токена и ID инсталяции (iid)
+    # Obtain token and installation ID (iid)
     docker run -it --rm --user $(id -u):$(id -g) --name=yandex-disk -v ~/.yandex-disk:/config -v ~/yandex-disk:/data yandex-disk token
 
-    # Запуск синхронизации
-    docker run --user $(id -u):$(id -g) --name=yandex-disk --name=yandex-disk -v ~/.yandex-disk:/config -v ~/yandex-disk:/data yandex-disk
+    # Start synchronization
+    docker run --user $(id -u):$(id -g) --name=yandex-disk -v ~/.yandex-disk:/config -v ~/yandex-disk:/data yandex-disk
 
-    # Получение статуса синхронизации
+    # Get synchronization status
     docker exec -it yandex-disk yandexdisk
 
-    # Корректное завершение работы
+    # Properly stop the service
     docker exec -it yandex-disk yandexdisk stop
 
-    # Возобновление синхронизации после остановки
+    # Resume synchronization after stopping
     docker start yandex-disk
 
-# Запуск от имени конкретного пользователя
-В командах выше `--user $(id -u):$(id -g)` следует заменить на UID и GID конкретного пользователя. Для запуска от пользователя root указать `--user 0:0` или не использовать опцию `--user` совсем.
+# Run as a Specific User
+In the commands above, replace `--user $(id -u):$(id -g)` with the UID and GID of the specific user. To run as the root user, use `--user 0:0` or omit the `--user` option entirely.
 
-# Персистентные данные
+# Persistent Data
 
-Каталог */config* внутри контейнера должен содержать файл token с авторизационным токеном и файл iid c ID инсталляции.
+The */config* directory inside the container should include:
+- A `token` file containing the authorization token (generated with the `token` command)
+- An `iid` file with the installation ID (generated with the `token` command)
+- A `config.cfg` configuration file
+    
+By default, the `config.cfg` file contains:
 
-Каталог */data* внутри контейнера используется как хранилище для синхронизации файлов.
+        auth="/config/token"
+        dir="/data"
+        proxy="no"
 
-# entrypoint.sh
+The */data* directory inside the container serves as the storage for synchronized files.
 
-Для работы яндекс диска требуется скрипт-обёртка.
-Основные задачи, которые он решает:
-- создание дефолтного файла конфигурации при первом запуске
-- менеджмент файла с ID инсталляции
+# Entrypoint Script Description
 
-Файл с ID инсталляции не описан в документации и всегда помещается в дефолтному пути в $HOME/.config/yandex-disk/iid. Поэтому, для возможности переопределения каталога с конфигурационным файлом и запуска от разных пользователей скрипт после авторизации уносит файл в /config, а перед запуском переносит файл по нужному пути.
+The Yandex Disk client requires a wrapper script to function. Its main tasks include:
+- Creating a default configuration file on the first run
+- Managing the installation ID file
+
+The installation ID file is undocumented and is always placed by default in `$HOME/.config/yandex-disk/iid`. To allow for configuration directory overrides and running as different users, the script moves the file to `/config` after authorization and restores it to the required path before starting the service.
